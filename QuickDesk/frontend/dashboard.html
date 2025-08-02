@@ -1,0 +1,20 @@
+<h2>Welcome, {{ role }}</h2>
+<form method="POST" action="/create_ticket">
+  <input type="text" name="subject" placeholder="Subject" required><br>
+  <textarea name="description" placeholder="Description"></textarea><br>
+  <select name="category_id" required>
+    {% for cat in categories %}
+      <option value="{{ cat[0] }}">{{ cat[1] }}</option>
+    {% endfor %}
+  </select><br>
+  <button type="submit">Create Ticket</button>
+</form>
+
+<h3>Tickets</h3>
+<ul>
+  {% for ticket in tickets %}
+    <li>#{{ ticket[0] }} - {{ ticket[1] }} [{{ ticket[2] }}] | Category: {{ ticket[3] or 'None' }}</li>
+  {% endfor %}
+</ul>
+
+<a href="/logout">Logout</a>
