@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickDesk | Admin & Agent Dashboard</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f4f7fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background-color: #2e86de;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    select, input, button {
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background-color: #1c7ed6;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1864ab;
+    }
+    .container {
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 1rem;
+    }
+    .card h3 {
+      margin: 0 0 0.5rem;
+    }
+    .status {
+      font-size: 0.85rem;
+      color: gray;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>QuickDesk Dashboard</h1>
+    <div class="controls">
+      <select id="roleSelector" onchange="switchView()">
+        <option value="agent">Agent</option>
+        <option value="admin">Admin</option>
+      </select>
+      <select id="statusFilter">
+        <option value="">All</option>
+        <option>Open</option>
+        <option>In Progress</option>
+        <option>Resolved</option>
+        <option>Closed</option>
+      </select>
+      <button onclick="loadDashboard()">Load</button>
+    </div>
+  </header>
+
+  <main class="container" id="dashboard"></main>
+
+  <script>
+    async function loadDashboard() {
+      const role = document.getElementById('roleSelector').value;
+      const status = document.getElementById('statusFilter').value;
+      const container = document.getElementById('dashboard');
+      container.innerHTML = '<p>Loading...</p>';
+
+      // Dummy API
+      const response = await fetch(`/api/${role}/dashboard?status=${status}`);
+      const data = await response.json();
+
+      container.innerHTML = '';
+      if (role === 'agent') {
+        data.tickets.forEach(ticket => {
+          container.innerHTML += `
+            <div class="card">
+              <h3>${ticket.subject}</h3>
+              <p>${ticket.description}</p>
+              <div class="status">Status: ${ticket.status} | Category: ${ticket.category}</div>
+              <div class="row">
+                <select onchange="updateStatus(${ticket.id}, this.value)">
+                  <option ${ticket.status==='Open'?'selected':''}>Open</option>
+                  <option ${ticket.status==='In Progress'?'selected':''}>In Progress</option>
+                  <option ${ticket.status==='Resolved'?'selected':''}>Resolved</option>
+                  <option ${ticket.status==='Closed'?'selected':''}>Closed</option>
+                </select>
+                <button onclick="assignToMe(${ticket.id})">Assign to Me</button>
+              </div>
+            </div>
+          `;
+        });
+      } else if (role === 'admin') {
+        container.innerHTML += `<h2>Users</h2>`;
+        data.users.forEach(user => {
+          container.innerHTML += `
+            <div class="card">
+              <h3>${user.email}</h3>
+              <p>Role: ${user.role}</p>
+            </div>
+          `;
+        });
+
+        container.innerHTML += `<h2>Categories</h2>`;
+        data.categories.forEach(cat => {
+          container.innerHTML += `<div class="card">${cat.name}</div>`;
+        });
+      }
+    }
+
+    function switchView() {
+      document.getElementById('dashboard').innerHTML = '';
+    }
+
+    async function updateStatus(ticketId, newStatus) {
+      await fetch(`/api/tickets/${ticketId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      loadDashboard();
+    }
+
+    async function assignToMe(ticketId) {
+      await fetch(`/api/tickets/${ticketId}/assign`, { method: 'POST' });
+      loadDashboard();
+    }
+
+    window.onload = loadDashboard;
+  </script>
+</body>
+</html>

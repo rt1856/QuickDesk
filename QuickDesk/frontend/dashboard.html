@@ -1,20 +1,83 @@
-<h2>Welcome, {{ role }}</h2>
-<form method="POST" action="/create_ticket">
-  <input type="text" name="subject" placeholder="Subject" required><br>
-  <textarea name="description" placeholder="Description"></textarea><br>
-  <select name="category_id" required>
-    {% for cat in categories %}
-      <option value="{{ cat[0] }}">{{ cat[1] }}</option>
-    {% endfor %}
-  </select><br>
-  <button type="submit">Create Ticket</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - QuickDesk</title>
+  <link rel="stylesheet" href="/frontend/styles.css">
+</head>
+<body>
+  <div class="login-card">
+    <div class="header">
+      <h2 class="welcome-text">Admin Panel</h2>
+      <p class="subheader-text">Review role requests and manage tickets</p>
+    </div>
 
-<h3>Tickets</h3>
-<ul>
-  {% for ticket in tickets %}
-    <li>#{{ ticket[0] }} - {{ ticket[1] }} [{{ ticket[2] }}] | Category: {{ ticket[3] or 'None' }}</li>
-  {% endfor %}
-</ul>
+    <section style="margin-bottom: 30px;">
+      <h3 style="color: var(--gray);">Pending Role Requests</h3>
+      <ul id="roleRequestList" style="list-style: none; padding-left: 0;"></ul>
+    </section>
 
-<a href="/logout">Logout</a>
+    <section>
+      <h3 style="color: var(--gray);">All Tickets</h3>
+      <ul id="allTickets" style="list-style: none; padding-left: 0;"></ul>
+    </section>
+  </div>
+
+  <script>
+    const loadRoleRequests = async () => {
+      const res = await fetch("http://localhost:5000/api/pending-role-requests");
+      const requests = await res.json();
+      const list = document.getElementById("roleRequestList");
+      list.innerHTML = "";
+      requests.forEach(req => {
+        const item = document.createElement("li");
+        item.innerHTML = `
+          <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
+            <strong>Email:</strong> ${req.email}<br>
+            <strong>Requested Role:</strong> ${req.requested_role}
+            <br><button onclick="approveRole(${req.user_id})" class="btn" style="margin-top: 8px;">Approve</button>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    };
+
+    const loadAllTickets = async () => {
+      const res = await fetch("http://localhost:5000/api/tickets/all");
+      const tickets = await res.json();
+      const list = document.getElementById("allTickets");
+      list.innerHTML = "";
+      tickets.forEach(t => {
+        const item = document.createElement("li");
+        item.innerHTML = `
+          <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
+            <strong>Subject:</strong> ${t.subject} | <em>Status: ${t.status}</em><br>
+            <strong>Category:</strong> ${t.category_name} <br>
+            <strong>Description:</strong> ${t.description} <br>
+            <strong>User:</strong> ${t.created_by_email} <br>
+            <strong>Created:</strong> ${new Date(t.created_at).toLocaleString()} <br>
+            <a href="/uploads/${t.attachment}" target="_blank">📎 Attachment</a>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    };
+
+    const approveRole = async (user_id) => {
+      const res = await fetch("http://localhost:5000/api/approve-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id })
+      });
+      if (res.ok) {
+        alert("Role approved successfully.");
+        loadRoleRequests();
+      }
+    };
+
+    loadRoleRequests();
+    loadAllTickets();
+  </script>
+</body>
+</html>

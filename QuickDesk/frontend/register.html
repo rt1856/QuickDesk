@@ -9,8 +9,8 @@
 <body>
   <div class="login-card">
     <div class="header">
-      <h2 class="welcome-text">Create your QuickDesk account</h2>
-      <p class="subheader-text">Sign up to get started</p>
+      <h2 class="welcome-text">Register to QuickDesk</h2>
+      <p class="subheader-text">Create your account below</p>
     </div>
 
     <form id="registerForm">
@@ -35,49 +35,8 @@
       </div>
 
       <button type="submit" class="btn">Register</button>
-      <p class="subheader-text">Already have an account? <a href="login.html">Login</a></p>
-      <div id="message" style="text-align:center; margin-top: 10px;"></div>
-    </form>
-  </div>
 
- <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Register - QuickDesk</title>
-  <link rel="stylesheet" href="/frontend/styles.css">
-</head>
-<body>
-  <div class="login-card">
-    <div class="header">
-      <h2 class="welcome-text">Create your QuickDesk account</h2>
-      <p class="subheader-text">Sign up to get started</p>
-    </div>
-
-    <form id="registerForm">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" required>
-      </div>
-
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" required>
-      </div>
-
-      <div class="form-group">
-        <label for="role">Role</label>
-        <select id="role" required>
-          <option value="">-- Select Role --</option>
-          <option value="end_user">End User</option>
-          <option value="agent">Agent</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-
-      <button type="submit" class="btn">Register</button>
-      <p class="subheader-text">Already have an account? <a href="login.html">Login</a></p>
+      <p class="subheader-text">Already have an account? <a href="login.html">Login here</a></p>
       <div id="message" style="text-align:center; margin-top: 10px;"></div>
     </form>
   </div>
@@ -85,29 +44,31 @@
   <script>
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
       const role = document.getElementById("role").value;
 
-      const res = await fetch("http://localhost:5000/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role })
-      });
+      try {
+        const res = await fetch("http://localhost:5000/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, role })
+        });
 
-      const result = await res.json();
-      const msgBox = document.getElementById("message");
+        const result = await res.json();
+        const msgBox = document.getElementById("message");
 
-      if (res.ok) {
-        msgBox.innerHTML = `<span style="color:green;">${result.message}. <a href="login.html">Login now</a></span>`;
-        e.target.reset();
-      } else {
-        msgBox.innerHTML = `<span style="color:red;">Error: ${result.error || 'Something went wrong.'}</span>`;
+        if (res.ok) {
+          msgBox.innerHTML = `<span style="color:green;">${result.message}. <a href="login.html">Login here</a>.</span>`;
+          e.target.reset();
+        } else {
+          msgBox.innerHTML = `<span style="color:red;">${result.error || 'Registration failed.'}</span>`;
+        }
+      } catch (err) {
+        document.getElementById("message").innerHTML = `<span style="color:red;">Network error</span>`;
       }
     });
   </script>
-</body>
-</html>
-
 </body>
 </html>
