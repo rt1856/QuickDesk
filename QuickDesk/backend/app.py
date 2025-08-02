@@ -5,7 +5,7 @@ from config import DB_CONFIG
 from flask_cors import CORS
 import os
 
-app = Flask(__name__, static_folder="frontend")
+app = Flask(__name__)
 app.secret_key = "quickdesk_secret"
 CORS(app)
 
@@ -17,14 +17,26 @@ app.config['MYSQL_DB'] = DB_CONFIG["DB"]
 
 mysql = MySQL(app)
 
-# ---------- Serve Static Files ----------
+# ---------- Serve HTML Pages and Other Files ----------
+# Serve login.html from the frontend folder
 @app.route('/')
 def serve_login():
-    return send_from_directory(app.static_folder, 'login.html')
+    return send_from_directory(os.path.join(app.root_path, 'frontend'), 'login.html')
 
+# Serve register.html from the frontend folder
+@app.route('/register')
+def serve_register():
+    return send_from_directory(os.path.join(app.root_path, 'frontend'), 'register.html')
+
+# Serve other pages from frontend/pages folder
 @app.route('/pages/<path:filename>')
 def serve_pages(filename):
-    return send_from_directory(os.path.join(app.static_folder, 'pages'), filename)
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'pages'), filename)
+
+# Serve static files like CSS and JS from frontend directory
+@app.route('/frontend/<path:filename>')
+def serve_static_files(filename):
+    return send_from_directory(os.path.join(app.root_path, 'frontend'), filename)
 
 # ---------- Auth ----------
 @app.route('/api/register', methods=['POST'])
