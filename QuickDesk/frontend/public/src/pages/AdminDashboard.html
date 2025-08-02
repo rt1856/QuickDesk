@@ -1,158 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuickDesk | Admin & Agent Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickDesk | Admin Dashboard</title>
   <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background-color: #f4f7fa;
-      margin: 0;
-      padding: 0;
-      color: #333;
-    }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f6f9; color: #333; }
     header {
-      background-color: #2e86de;
-      color: white;
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
+      background: #2e86de; color: white; padding: 1rem 2rem;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    .controls {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
+    header h1 { margin: 0; }
+    .btn {
+      padding: 0.6rem 1.2rem; border: none; border-radius: 5px;
+      cursor: pointer; font-weight: bold;
     }
-    select, input, button {
-      padding: 0.5rem;
-      border-radius: 5px;
-      border: none;
+    .btn-danger { background: #e74c3c; color: white; }
+    .btn-approve { background: #2ecc71; color: white; }
+    .btn-reject { background: #f1c40f; color: white; }
+    .btn-delete { background: #e67e22; color: white; }
+    .btn-add { background: #3498db; color: white; }
+    .section { padding: 2rem; }
+    table {
+      width: 100%; border-collapse: collapse;
+      margin-top: 1rem; background: white; border-radius: 6px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
     }
-    button {
-      background-color: #1c7ed6;
-      color: white;
-      cursor: pointer;
+    th, td {
+      padding: 1rem; border-bottom: 1px solid #eee; text-align: left;
     }
-    button:hover {
-      background-color: #1864ab;
-    }
-    .container {
-      padding: 2rem;
-    }
-    .card {
-      background: white;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-      margin-bottom: 1rem;
-    }
-    .card h3 {
-      margin: 0 0 0.5rem;
-    }
-    .status {
-      font-size: 0.85rem;
-      color: gray;
-    }
-    .row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 1rem;
-    }
+    th { background: #f0f4f8; }
+    h2 { margin-top: 2rem; }
+    .flex { display: flex; gap: 1rem; margin-top: 1rem; }
+    input[type="text"] { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
   </style>
 </head>
 <body>
   <header>
-    <h1>QuickDesk Dashboard</h1>
-    <div class="controls">
-      <select id="roleSelector" onchange="switchView()">
-        <option value="agent">Agent</option>
-        <option value="admin">Admin</option>
-      </select>
-      <select id="statusFilter">
-        <option value="">All</option>
-        <option>Open</option>
-        <option>In Progress</option>
-        <option>Resolved</option>
-        <option>Closed</option>
-      </select>
-      <button onclick="loadDashboard()">Load</button>
-    </div>
+    <h1>QuickDesk - Admin Panel</h1>
+    <button class="btn btn-danger" onclick="logout()">Logout</button>
   </header>
 
-  <main class="container" id="dashboard"></main>
+  <div class="section">
+    <h2>Pending Role Upgrade Requests</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>User Email</th>
+          <th>Current Role</th>
+          <th>Requested Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="upgradeRequests"></tbody>
+    </table>
+
+    <h2>Manage Users</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Role</th>
+        </tr>
+      </thead>
+      <tbody id="userTable"></tbody>
+    </table>
+
+    <h2>Categories</h2>
+    <div class="flex">
+      <input type="text" id="newCategory" placeholder="New category name">
+      <button class="btn btn-add" onclick="addCategory()">Add Category</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Ongoing</th>
+          <th>In Progress</th>
+          <th>Resolved</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="categoryList"></tbody>
+    </table>
+  </div>
 
   <script>
-    async function loadDashboard() {
-      const role = document.getElementById('roleSelector').value;
-      const status = document.getElementById('statusFilter').value;
-      const container = document.getElementById('dashboard');
-      container.innerHTML = '<p>Loading...</p>';
-
-      // Dummy API
-      const response = await fetch(`/api/${role}/dashboard?status=${status}`);
-      const data = await response.json();
-
-      container.innerHTML = '';
-      if (role === 'agent') {
-        data.tickets.forEach(ticket => {
-          container.innerHTML += `
-            <div class="card">
-              <h3>${ticket.subject}</h3>
-              <p>${ticket.description}</p>
-              <div class="status">Status: ${ticket.status} | Category: ${ticket.category}</div>
-              <div class="row">
-                <select onchange="updateStatus(${ticket.id}, this.value)">
-                  <option ${ticket.status==='Open'?'selected':''}>Open</option>
-                  <option ${ticket.status==='In Progress'?'selected':''}>In Progress</option>
-                  <option ${ticket.status==='Resolved'?'selected':''}>Resolved</option>
-                  <option ${ticket.status==='Closed'?'selected':''}>Closed</option>
-                </select>
-                <button onclick="assignToMe(${ticket.id})">Assign to Me</button>
-              </div>
-            </div>
-          `;
-        });
-      } else if (role === 'admin') {
-        container.innerHTML += `<h2>Users</h2>`;
-        data.users.forEach(user => {
-          container.innerHTML += `
-            <div class="card">
-              <h3>${user.email}</h3>
-              <p>Role: ${user.role}</p>
-            </div>
-          `;
-        });
-
-        container.innerHTML += `<h2>Categories</h2>`;
-        data.categories.forEach(cat => {
-          container.innerHTML += `<div class="card">${cat.name}</div>`;
-        });
-      }
+    async function logout() {
+      alert("Logging out");
     }
 
-    function switchView() {
-      document.getElementById('dashboard').innerHTML = '';
-    }
-
-    async function updateStatus(ticketId, newStatus) {
-      await fetch(`/api/tickets/${ticketId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+    async function loadUsers() {
+      const res = await fetch('http://localhost:3000/api/users');
+      const users = await res.json();
+      const tbody = document.getElementById('userTable');
+      tbody.innerHTML = '';
+      users.forEach(user => {
+        tbody.innerHTML += `<tr><td>${user.id}</td><td>${user.email}</td><td>${user.role}</td></tr>`;
       });
-      loadDashboard();
     }
 
-    async function assignToMe(ticketId) {
-      await fetch(`/api/tickets/${ticketId}/assign`, { method: 'POST' });
-      loadDashboard();
+    async function loadCategories() {
+      const res = await fetch('http://localhost:3000/api/categories/stats');
+      const categories = await res.json();
+      const list = document.getElementById('categoryList');
+      list.innerHTML = '';
+      categories.forEach(cat => {
+        list.innerHTML += `<tr>
+          <td>${cat.name}</td>
+          <td>${cat.open}</td>
+          <td>${cat.in_progress}</td>
+          <td>${cat.resolved}</td>
+          <td><button class="btn btn-delete" onclick="deleteCategory(${cat.id})">Delete</button></td>
+        </tr>`;
+      });
     }
 
-    window.onload = loadDashboard;
+    async function addCategory() {
+      const name = document.getElementById('newCategory').value.trim();
+      if (!name) return alert("Enter category name");
+      await fetch('http://localhost:3000/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      document.getElementById('newCategory').value = '';
+      loadCategories();
+    }
+
+    async function deleteCategory(id) {
+      if (!confirm("Are you sure to delete this category?")) return;
+      await fetch(`http://localhost:3000/api/categories/${id}`, {
+        method: 'DELETE'
+      });
+      loadCategories();
+    }
+
+    async function loadUpgradeRequests() {
+      const res = await fetch('http://localhost:3000/api/upgrade-requests');
+      const requests = await res.json();
+      const tbody = document.getElementById('upgradeRequests');
+      tbody.innerHTML = '';
+      requests.forEach(req => {
+        tbody.innerHTML += `<tr>
+          <td>${req.email}</td>
+          <td>${req.current_role}</td>
+          <td>${req.requested_role}</td>
+          <td>
+            <button class="btn btn-approve" onclick="approveRequest(${req.id}, '${req.email}', '${req.requested_role}')">Approve</button>
+            <button class="btn btn-reject" onclick="rejectRequest(${req.id})">Reject</button>
+          </td>
+        </tr>`;
+      });
+    }
+
+    async function approveRequest(requestId, email, newRole) {
+      await fetch(`http://localhost:3000/api/upgrade-requests/${requestId}/approve`, { method: 'POST' });
+      await fetch(`http://localhost:3000/api/users/change-role`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role: newRole })
+      });
+      await sendEmail(email, newRole);
+      loadUpgradeRequests();
+      loadUsers();
+    }
+
+    async function rejectRequest(requestId) {
+      await fetch(`http://localhost:3000/api/upgrade-requests/${requestId}/reject`, { method: 'POST' });
+      loadUpgradeRequests();
+    }
+
+    async function sendEmail(email, newRole) {
+      await fetch('http://localhost:3000/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, subject: 'Role Approved', message: `Your role has been upgraded to ${newRole}.` })
+      });
+    }
+
+    window.onload = () => {
+      loadUsers();
+      loadCategories();
+      loadUpgradeRequests();
+    }
   </script>
 </body>
 </html>

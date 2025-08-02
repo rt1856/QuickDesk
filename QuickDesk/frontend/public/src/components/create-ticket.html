@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create New Ticket - QuickDesk</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f7f9fb;
+      padding: 2rem;
+    }
+    h1 {
+      color: #2e86de;
+    }
+    form {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin: 1rem 0 0.5rem;
+      font-weight: bold;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.7rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 1.5rem;
+      background: #2e86de;
+      color: white;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background: #1c6ecf;
+    }
+  </style>
+</head>
+<body>
+  <h1>Create a New Ticket</h1>
+  <form id="ticketForm">
+    <label for="subject">Subject</label>
+    <input type="text" id="subject" name="subject" required>
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="5" required></textarea>
+
+    <label for="category">Category</label>
+    <select id="category" name="category">
+      <option>Technical</option>
+      <option>HR</option>
+      <option>Billing</option>
+      <option>Other</option>
+    </select>
+
+    <label for="attachment">Attachment (optional)</label>
+    <input type="file" id="attachment" name="attachment">
+
+    <button type="submit">Submit Ticket</button>
+  </form>
+
+  <script>
+    document.getElementById("ticketForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const response = await fetch("/api/tickets", {
+        method: "POST",
+        body: formData
+      });
+
+      if (response.ok) {
+        alert("Ticket created successfully!");
+        window.location.href = "enduser.html";
+      } else {
+        alert("Something went wrong.");
+      }
+    });
+  </script>
+</body>
+</html>

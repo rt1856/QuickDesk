@@ -1,28 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuickDesk | End User Dashboard</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f7f9fb; color: #333; }
-    header { background: #2e86de; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-    header h1 { margin: 0; }
-    .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-    .btn-primary { background: white; color: #2e86de; margin-left: 10px; }
-    .btn-danger { background: #e74c3c; color: white; }
-    .container { padding: 2rem; }
-    .ticket-table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .ticket-table th, .ticket-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
-    .ticket-table th { background: #f0f4f8; font-size: 0.95rem; }
-    .badge { padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 5px; background: #e2f0ff; color: #1c7ed6; }
-    .actions button { margin-right: 0.5rem; }
-    .status-open { color: green; font-weight: bold; }
-    .status-progress { color: orange; font-weight: bold; }
-    .status-resolved { color: teal; font-weight: bold; }
-    .status-closed { color: red; font-weight: bold; }
-    .ticket-subject { font-weight: bold; margin-bottom: 0.3rem; }
-    .ticket-meta { font-size: 0.85rem; color: #555; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f7f9fb;
+      color: #333;
+    }
+    header {
+      background: #2e86de;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+    }
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-primary {
+      background: white;
+      color: #2e86de;
+      margin-left: 10px;
+    }
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+    .container {
+      padding: 2rem;
+    }
+    .ticket-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .ticket-table th,
+    .ticket-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    .ticket-table th {
+      background: #f0f4f8;
+      font-size: 0.95rem;
+    }
+    .badge {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      border-radius: 5px;
+      background: #e2f0ff;
+      color: #1c7ed6;
+    }
+    .actions button {
+      margin-right: 0.5rem;
+    }
+    .status-open {
+      color: green;
+      font-weight: bold;
+    }
+    .status-progress {
+      color: orange;
+      font-weight: bold;
+    }
+    .status-resolved {
+      color: teal;
+      font-weight: bold;
+    }
+    .status-closed {
+      color: red;
+      font-weight: bold;
+    }
+    .ticket-subject {
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+    }
+    .ticket-meta {
+      font-size: 0.85rem;
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -33,6 +104,7 @@
       <button class="btn btn-danger" onclick="logout()">Logout</button>
     </div>
   </header>
+
   <div class="container">
     <h2>Dashboard</h2>
     <h3>My Tickets</h3>
@@ -55,36 +127,23 @@
 
   <script>
     function createTicket() {
-      // Redirect to ticket creation form
-      window.location.href = 'create-ticket.html';
+      // Navigate to ticket creation page
+      window.location.href = '../components/create-ticket.html';
     }
+
     function logout() {
       alert("Logging out...");
-      // Redirect or clear auth token here
+      // Implement logout logic
     }
-    function loadTickets() {
-      // Simulate API data (replace with fetch(`/api/user/tickets`) )
-      const tickets = [
-        {
-          id: 1,
-          subject: "Issue with login",
-          status: "Open",
-          updated: "2025-08-02",
-          replies: 3,
-          votes: 5
-        },
-        {
-          id: 2,
-          subject: "Feature request: dark mode",
-          status: "Resolved",
-          updated: "2025-07-28",
-          replies: 7,
-          votes: 12
-        }
-      ];
+
+    async function loadTickets() {
+      const userId = 1; // Replace this with actual user ID from session
+      const res = await fetch(`http://localhost:3000/api/user/${userId}/tickets`);
+      const tickets = await res.json();
 
       const tbody = document.getElementById('ticketBody');
       tbody.innerHTML = '';
+
       tickets.forEach(ticket => {
         tbody.innerHTML += `
           <tr>
@@ -106,11 +165,12 @@
     }
 
     function viewTicket(id) {
-      alert(`Redirect to ticket detail page for ticket #${id}`);
+      window.location.href = `../components/ticket-detail.html?id=${id}`;
     }
 
     function closeTicket(id) {
       alert(`Ticket #${id} has been closed.`);
+      // Send PATCH request to backend if needed
     }
 
     window.onload = loadTickets;

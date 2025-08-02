@@ -1,62 +1,126 @@
-// src/pages/AgentDashboard.jsx
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-
-export default function AgentDashboard() {
-  const [tickets, setTickets] = useState([]);
-  const [queue, setQueue] = useState("All");
-
-  useEffect(() => {
-    axios
-      .get(`/api/tickets/agent`, {
-        params: { queue }
-      })
-      .then((res) => setTickets(res.data))
-      .catch(console.error);
-  }, [queue]);
-
-  const updateStatus = (id, status) => {
-    axios.patch(`/api/tickets/${id}/status`, { status }).then(() => {
-      setTickets((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, status } : t))
-      );
-    });
-  };
-
-  return (
-    <div className="p-4">
-      <div className="mb-4">
-        <select
-          className="select"
-          value={queue}
-          onChange={(e) => setQueue(e.target.value)}
-        >
-          <option>All</option>
-          <option>My Tickets</option>
-          <option>Recently Modified</option>
-        </select>
-      </div>
-
-      {tickets.map((ticket) => (
-        <div
-          key={ticket.id}
-          className="border p-4 mb-3 rounded bg-white shadow-md"
-        >
-          <h3 className="font-bold">{ticket.subject}</h3>
-          <p>{ticket.description}</p>
-          <p>Status: {ticket.status}</p>
-          <select
-            className="select"
-            value={ticket.status}
-            onChange={(e) => updateStatus(ticket.id, e.target.value)}
-          >
-            <option>Open</option>
-            <option>In Progress</option>
-            <option>Resolved</option>
-            <option>Closed</option>
-          </select>
-        </div>
-      ))}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuickDesk | Agent Dashboard</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f7f9fb; color: #333; }
+    header {
+      background: #2e86de; color: white; padding: 1rem 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    header h1 { margin: 0; }
+    .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    .btn-primary { background: white; color: #2e86de; margin-left: 10px; }
+    .btn-danger { background: #e74c3c; color: white; }
+    .container { padding: 2rem; }
+    .filter-bar { margin-bottom: 1rem; display: flex; justify-content: flex-start; align-items: center; gap: 10px; }
+    .ticket-table {
+      width: 100%; border-collapse: collapse; margin-top: 1rem; background: white;
+      border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .ticket-table th, .ticket-table td {
+      padding: 1rem; text-align: left; border-bottom: 1px solid #eee;
+    }
+    .ticket-table th {
+      background: #f0f4f8; font-size: 0.95rem;
+    }
+    .status-open { color: green; font-weight: bold; }
+    .status-progress { color: orange; font-weight: bold; }
+    .status-resolved { color: teal; font-weight: bold; }
+    .status-closed { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>QuickDesk - Agent</h1>
+    <div>
+      <button class="btn btn-primary" onclick="createTicket()">+ New Ticket</button>
+      <button class="btn btn-danger" onclick="logout()">Logout</button>
     </div>
-  );
-}
+  </header>
+
+  <div class="container">
+    <h2>All Tickets</h2>
+    <div class="filter-bar">
+      <label>Sort by:</label>
+      <select onchange="loadTickets(this.value)">
+        <option value="recent">Most Recent</option>
+        <option value="comments">Most Commented</option>
+        <option value="votes">Most Upvoted</option>
+      </select>
+    </div>
+
+    <table class="ticket-table">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Status</th>
+          <th>Updated</th>
+          <th>Replies</th>
+          <th>Votes</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="ticketBody">
+        <!-- Tickets will be injected here -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    function logout() {
+      alert("Logging out...");
+      // implement logout logic here
+    }
+
+    function createTicket() {
+      window.location.href = '../components/create-ticket.html';
+    }
+
+    async function loadTickets(sortBy = 'recent') {
+      const res = await fetch(`http://localhost:3000/api/tickets?sort=${sortBy}`);
+      const tickets = await res.json();
+
+      const tbody = document.getElementById('ticketBody');
+      tbody.innerHTML = '';
+
+      tickets.forEach(ticket => {
+        tbody.innerHTML += `
+          <tr>
+            <td>
+              <div class="ticket-subject">${ticket.subject}</div>
+              <div class="ticket-meta">Ticket ID: ${ticket.id}</div>
+            </td>
+            <td class="status-${ticket.status.toLowerCase()}">${ticket.status}</td>
+            <td>${ticket.updated}</td>
+            <td>${ticket.replies}</td>
+            <td>${ticket.votes}</td>
+            <td>
+              <button class="btn btn-primary" onclick="viewTicket(${ticket.id})">Respond</button>
+              ${ticket.status !== 'Resolved' ? `<button class="btn" onclick="markResolved(${ticket.id})">Resolve</button>` : ''}
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function viewTicket(id) {
+      window.location.href = `../components/ticket-detail.html?id=${id}`;
+    }
+
+    async function markResolved(id) {
+      const confirmed = confirm("Mark ticket as resolved?");
+      if (!confirmed) return;
+      await fetch(`http://localhost:3000/api/tickets/${id}/resolve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      loadTickets();
+    }
+
+    window.onload = () => loadTickets();
+  </script>
+</body>
+</html>

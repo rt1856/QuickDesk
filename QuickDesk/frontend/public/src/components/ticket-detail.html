@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket Detail - QuickDesk</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; padding: 2rem; }
+    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+    .header { font-size: 1.5rem; margin-bottom: 0.5rem; color: #2e86de; }
+    .meta { color: gray; font-size: 0.9rem; margin-bottom: 1rem; }
+    .conversation { margin-top: 2rem; }
+    .reply { margin-top: 2rem; }
+    textarea { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px; margin-top: 0.5rem; }
+    button { margin-top: 1rem; background: #2e86de; color: white; border: none; padding: 0.6rem 1.4rem; border-radius: 5px; cursor: pointer; }
+    .comment { border-left: 4px solid #2e86de; margin-top: 1rem; padding-left: 1rem; background: #f0f4fa; padding: 1rem; border-radius: 5px; }
+    .comment .author { font-weight: bold; color: #2e86de; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header" id="ticket-subject">Loading...</div>
+    <div class="meta" id="ticket-meta"></div>
+    <div id="ticket-description"></div>
+  </div>
+
+  <div class="card conversation">
+    <h3>Conversation</h3>
+    <div id="comments"></div>
+
+    <div class="reply">
+      <label for="replyText">Add a Reply:</label>
+      <textarea id="replyText" rows="4"></textarea>
+      <button onclick="submitReply()">Reply</button>
+    </div>
+  </div>
+
+  <script>
+    const ticketId = new URLSearchParams(window.location.search).get('id');
+
+    async function loadTicket() {
+      const res = await fetch(`/api/tickets/${ticketId}`);
+      const ticket = await res.json();
+      document.getElementById("ticket-subject").textContent = ticket.subject;
+      document.getElementById("ticket-meta").textContent = `Status: ${ticket.status} | Category: ${ticket.category}`;
+      document.getElementById("ticket-description").textContent = ticket.description;
+
+      const commentsRes = await fetch(`/api/tickets/${ticketId}/comments`);
+      const comments = await commentsRes.json();
+      const commentSection = document.getElementById("comments");
+      commentSection.innerHTML = '';
+      comments.forEach(comment => {
+        commentSection.innerHTML += `
+          <div class="comment">
+            <div class="author">${comment.author}</div>
+            <div class="text">${comment.message}</div>
+          </div>`;
+      });
+    }
+
+    async function submitReply() {
+      const message = document.getElementById("replyText").value;
+      if (!message) return;
+      await fetch(`/api/tickets/${ticketId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      document.getElementById("replyText").value = '';
+      loadTicket();
+    }
+
+    window.onload = loadTicket;
+  </script>
+</body>
+</html>
